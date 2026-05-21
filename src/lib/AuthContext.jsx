@@ -9,15 +9,15 @@ export const AuthProvider = ({ children }) => {
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
 
   useEffect(() => {
-    // Get initial session
+    // Handle OAuth redirect
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       setIsAuthenticated(!!session);
       setIsLoadingAuth(false);
     });
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth event:", event, session);
       setUser(session?.user ?? null);
       setIsAuthenticated(!!session);
       setIsLoadingAuth(false);
@@ -33,7 +33,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const navigateToLogin = () => {
-    window.location.href = '/login';
+    window.location.href = '/';
   };
 
   return (
