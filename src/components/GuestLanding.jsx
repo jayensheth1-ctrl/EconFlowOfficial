@@ -1,12 +1,9 @@
-const db = globalThis.__B44_DB__ || { auth:{ isAuthenticated: async()=>false, me: async()=>null }, entities:new Proxy({}, { get:()=>({ filter:async()=>[], get:async()=>null, create:async()=>({}), update:async()=>({}), delete:async()=>({}) }) }), integrations:{ Core:{ UploadFile:async()=>({ file_url:'' }) } } };
-
 import { motion } from "framer-motion";
 import { LogIn, UserPlus, Zap } from "lucide-react";
 import { initGuest } from "../lib/guestProgress";
-
+import { supabase } from "../lib/supabaseClient";
 import EconBuddy from "./EconBuddy";
 
-// Google "G" icon as SVG
 function GoogleIcon() {
   return (
     <svg viewBox="0 0 24 24" className="w-4 h-4 flex-shrink-0" xmlns="http://www.w3.org/2000/svg">
@@ -24,17 +21,30 @@ export default function GuestLanding({ onGuestStart, onLogin }) {
     onGuestStart();
   }
 
-  function handleLogin() {
-    db.auth.redirectToLogin(window.location.href);
+  async function handleGoogleLogin() {
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin }
+    });
   }
 
-  function handleSignUp() {
-    // redirectToLogin with signup hint — base44 login page handles both flows
-    db.auth.redirectToLogin(window.location.href + "?signup=true");
+  async function handleEmailLogin() {
+    const email = prompt("Enter your email:");
+    if (!email) return;
+    const password = prompt("Enter your password:");
+    if (!password) return;
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) alert(error.message);
   }
 
-  function handleGoogleLogin() {
-    db.auth.redirectToLogin(window.location.href + "?provider=google");
+  async function handleSignUp() {
+    const email = prompt("Enter your email:");
+    if (!email) return;
+    const password = prompt("Enter a password:");
+    if (!password) return;
+    const { error } = await supabase.auth.signUp({ email, password });
+    if (error) alert(error.message);
+    else alert("Check your email to confirm your account!");
   }
 
   return (
@@ -42,7 +52,6 @@ export default function GuestLanding({ onGuestStart, onLogin }) {
       className="fixed inset-0 flex flex-col items-center justify-center px-6"
       style={{ background: "linear-gradient(160deg, #0A0E17 0%, #0d1b2a 60%, #0a1628 100%)" }}
     >
-      {/* Floating emoji bg */}
       {["💰", "📈", "💎", "🪙", "📊", "💵", "🚀", "⭐"].map((e, i) => (
         <div
           key={i}
@@ -54,7 +63,6 @@ export default function GuestLanding({ onGuestStart, onLogin }) {
       ))}
 
       <div className="w-full max-w-sm flex flex-col items-center gap-6 z-10">
-        {/* Mascot */}
         <motion.div
           animate={{ y: [0, -10, 0] }}
           transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
@@ -63,7 +71,6 @@ export default function GuestLanding({ onGuestStart, onLogin }) {
           <EconBuddy config={{ helmet: "basic", eyes: "cyan", outfit: "midnight", accessory: "none" }} size={100} />
         </motion.div>
 
-        {/* Title */}
         <div className="text-center">
           <h1 className="text-3xl font-black" style={{ color: "#00F2FF", textShadow: "0 0 20px #00F2FF66" }}>
             EconBuddy
@@ -74,7 +81,6 @@ export default function GuestLanding({ onGuestStart, onLogin }) {
         </div>
 
         <div className="w-full flex flex-col gap-3">
-          {/* Sign Up */}
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={handleSignUp}
@@ -89,10 +95,9 @@ export default function GuestLanding({ onGuestStart, onLogin }) {
             Create Free Account
           </motion.button>
 
-          {/* Log In */}
           <motion.button
             whileTap={{ scale: 0.97 }}
-            onClick={handleLogin}
+            onClick={handleEmailLogin}
             className="w-full py-3.5 rounded-2xl font-bold text-sm flex items-center justify-center gap-2"
             style={{
               background: "rgba(255,255,255,0.07)",
@@ -104,7 +109,6 @@ export default function GuestLanding({ onGuestStart, onLogin }) {
             Log In
           </motion.button>
 
-          {/* Google Login */}
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={handleGoogleLogin}
@@ -119,14 +123,12 @@ export default function GuestLanding({ onGuestStart, onLogin }) {
             Continue with Google
           </motion.button>
 
-          {/* Divider */}
           <div className="flex items-center gap-3 my-1">
             <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.1)" }} />
             <span className="text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>or</span>
             <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.1)" }} />
           </div>
 
-          {/* Guest Mode */}
           <motion.button
             whileTap={{ scale: 0.96 }}
             onClick={handleGuest}
