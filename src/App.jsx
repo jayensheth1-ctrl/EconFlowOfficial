@@ -7,6 +7,7 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import Layout from './components/Layout';
 import GuestLanding from './components/GuestLanding';
+import Login from './pages/Login';
 import { isGuestMode, clearGuest } from './lib/guestProgress';
 import Home from './pages/Home';
 import Leaderboard from './pages/Leaderboard';
@@ -20,12 +21,16 @@ import BattleLogs from './pages/BattleLogs';
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isAuthenticated } = useAuth();
   const [guestActive, setGuestActive] = useState(isGuestMode());
+  const [showLogin, setShowLogin] = useState(false);
 
   // When user logs in, clear guest mode
   useEffect(() => {
     if (isAuthenticated && guestActive) {
       clearGuest();
       setGuestActive(false);
+    }
+    if (isAuthenticated) {
+      setShowLogin(false);
     }
   }, [isAuthenticated]);
 
@@ -38,10 +43,13 @@ const AuthenticatedApp = () => {
   }
 
   if (!isAuthenticated && !guestActive) {
+    if (showLogin) {
+      return <Login onBack={() => setShowLogin(false)} />;
+    }
     return (
       <GuestLanding
         onGuestStart={() => setGuestActive(true)}
-        onLogin={() => {}}
+        onLogin={() => setShowLogin(true)}
       />
     );
   }

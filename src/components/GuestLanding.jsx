@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
 import { LogIn, UserPlus, Zap } from "lucide-react";
 import { initGuest } from "../lib/guestProgress";
-import { supabase } from "../lib/supabaseClient";
 import EconBuddy from "./EconBuddy";
 
 function GoogleIcon() {
@@ -19,32 +18,6 @@ export default function GuestLanding({ onGuestStart, onLogin }) {
   function handleGuest() {
     initGuest();
     onGuestStart();
-  }
-
-  async function handleGoogleLogin() {
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.origin }
-    });
-  }
-
-  async function handleEmailLogin() {
-    const email = prompt("Enter your email:");
-    if (!email) return;
-    const password = prompt("Enter your password:");
-    if (!password) return;
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) alert(error.message);
-  }
-
-  async function handleSignUp() {
-    const email = prompt("Enter your email:");
-    if (!email) return;
-    const password = prompt("Enter a password:");
-    if (!password) return;
-    const { error } = await supabase.auth.signUp({ email, password });
-    if (error) alert(error.message);
-    else alert("Check your email to confirm your account!");
   }
 
   return (
@@ -83,7 +56,7 @@ export default function GuestLanding({ onGuestStart, onLogin }) {
         <div className="w-full flex flex-col gap-3">
           <motion.button
             whileTap={{ scale: 0.97 }}
-            onClick={handleSignUp}
+            onClick={onLogin}
             className="w-full py-4 rounded-2xl font-extrabold text-base flex items-center justify-center gap-2"
             style={{
               background: "linear-gradient(135deg, hsl(145 70% 48%), hsl(145 70% 35%))",
@@ -97,7 +70,7 @@ export default function GuestLanding({ onGuestStart, onLogin }) {
 
           <motion.button
             whileTap={{ scale: 0.97 }}
-            onClick={handleEmailLogin}
+            onClick={onLogin}
             className="w-full py-3.5 rounded-2xl font-bold text-sm flex items-center justify-center gap-2"
             style={{
               background: "rgba(255,255,255,0.07)",
@@ -107,20 +80,6 @@ export default function GuestLanding({ onGuestStart, onLogin }) {
           >
             <LogIn className="w-4 h-4" />
             Log In
-          </motion.button>
-
-          <motion.button
-            whileTap={{ scale: 0.97 }}
-            onClick={handleGoogleLogin}
-            className="w-full py-3.5 rounded-2xl font-bold text-sm flex items-center justify-center gap-2"
-            style={{
-              background: "#fff",
-              border: "1.5px solid rgba(255,255,255,0.15)",
-              color: "#3c4043",
-            }}
-          >
-            <GoogleIcon />
-            Continue with Google
           </motion.button>
 
           <div className="flex items-center gap-3 my-1">
