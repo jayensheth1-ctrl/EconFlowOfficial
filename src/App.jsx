@@ -1,14 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
-import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import Layout from './components/Layout';
 import GuestLanding from './components/GuestLanding';
-import { isGuestMode } from './lib/guestProgress';
+import { isGuestMode, clearGuest } from './lib/guestProgress';
 import Home from './pages/Home';
 import Leaderboard from './pages/Leaderboard';
 import Shop from './pages/Shop';
@@ -18,14 +17,19 @@ import MascotStudio from './pages/MascotStudio';
 import KnowledgeBase from './pages/KnowledgeBase';
 import BattleLogs from './pages/BattleLogs';
 
-const SESSION_WELCOMED_KEY = "econbuddy_welcomed";
-
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, isAuthenticated } = useAuth();
+  const { isLoadingAuth, isAuthenticated } = useAuth();
   const [guestActive, setGuestActive] = useState(isGuestMode());
-  const [showWelcome, setShowWelcome] = useState(false); // kept for onGuestStart callback
 
-  if (isLoadingPublicSettings || isLoadingAuth) {
+  // When user logs in, clear guest mode
+  useEffect(() => {
+    if (isAuthenticated && guestActive) {
+      clearGuest();
+      setGuestActive(false);
+    }
+  }, [isAuthenticated]);
+
+  if (isLoadingAuth) {
     return (
       <div className="fixed inset-0 flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
@@ -33,47 +37,18 @@ const AuthenticatedApp = () => {
     );
   }
 
-  if (authError?.type === 'user_not_registered') {
-    return <UserNotRegisteredError />;
-  }
-
-  // Show welcome/landing screen for unauthenticated, non-guest users every fresh session
   if (!isAuthenticated && !guestActive) {
     return (
       <GuestLanding
-        onGuestStart={() => {
-          sessionStorage.setItem(SESSION_WELCOMED_KEY, "1");
-          setShowWelcome(false);
-          setGuestActive(true);
-        }}
-        onLogin={() => {
-          sessionStorage.setItem(SESSION_WELCOMED_KEY, "1");
-        }}
+        onGuestStart={() => setGuestActive(true)}
+        onLogin={() => {}}
       />
-    );
-  }
-
-  if (guestActive) {
-    return (
-      <Routes>
-        <Route element={<Layout isGuest />}>
-          <Route path="/" element={<Home />} />
-          <Route path="/leaderboard" element={<Leaderboard />} />
-          <Route path="/shop" element={<Shop />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/lab" element={<Lab />} />
-          <Route path="/mascot" element={<MascotStudio />} />
-          <Route path="/knowledge" element={<KnowledgeBase />} />
-          <Route path="/battle-logs" element={<BattleLogs />} />
-          <Route path="*" element={<PageNotFound />} />
-        </Route>
-      </Routes>
     );
   }
 
   return (
     <Routes>
-      <Route element={<Layout />}>
+      <Route element={<Layout isGuest={guestActive && !isAuthenticated} />}>
         <Route path="/" element={<Home />} />
         <Route path="/leaderboard" element={<Leaderboard />} />
         <Route path="/shop" element={<Shop />} />
