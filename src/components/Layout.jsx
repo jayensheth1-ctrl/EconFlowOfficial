@@ -1,9 +1,8 @@
-const db = globalThis.__B44_DB__ || { auth:{ isAuthenticated: async()=>false, me: async()=>null }, entities:new Proxy({}, { get:()=>({ filter:async()=>[], get:async()=>null, create:async()=>({}), update:async()=>({}), delete:async()=>({}) }) }), integrations:{ Core:{ UploadFile:async()=>({ file_url:'' }) } } };
-
 import { Outlet } from "react-router-dom";
 import { useRef } from "react";
 import { isGuestMode, getGuestProgress, saveGuestProgress, initGuest, clearGuest } from "../lib/guestProgress";
 import { setActiveTheme } from "../lib/themeManager";
+import { supabase } from "../lib/supabaseClient";
 import GuestBanner from "./GuestBanner";
 import HeaderBar from "./HeaderBar";
 import BottomNav from "./BottomNav";
@@ -12,7 +11,6 @@ import XpChestOverlay from "./XpChestOverlay";
 import FloatingGemPopup from "./FloatingGemPopup";
 import { useState, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
-
 import { PENDING_FORFEIT_KEY } from "../lib/botBattle";
 import { toast } from "sonner";
 
@@ -31,7 +29,6 @@ export default function Layout({ isGuest = false }) {
   }));
   const stockTickRef = useRef(30);
 
-  // Global stock engine — runs even when on other pages
   useEffect(() => {
     const VOLS = { STABL: 1.2, GLOW: 3.5, CRPT: 8 };
     const id = setInterval(() => {
@@ -57,7 +54,6 @@ export default function Layout({ isGuest = false }) {
   }
 
   function setProgressWithLevelCheck(newProgress, gemPopups) {
-    // Guest: persist to localStorage instead of DB
     if (guestMode) {
       saveGuestProgress(newProgress);
       setProgress(newProgress);
@@ -76,7 +72,7 @@ export default function Layout({ isGuest = false }) {
       if (newMilestone > oldMilestone && newMilestone > lastXpMilestoneRef.current) {
         lastXpMilestoneRef.current = newMilestone;
         const withChest = { ...newProgress, gems: (newProgress.gems || 0) + 50 };
-        db.entities.UserProgress.update(newProgress.id, { gems: withChest.gems });
+        supabase.from("user_progress").update({ gems: withChest.gems }).eq("id", newProgress.id);
         setProgress(withChest);
         setXpChestShow(true);
         if (gemPopups) gemPopups.forEach(p => spawnFloatingGem(p.amount, p.label));
@@ -87,7 +83,6 @@ export default function Layout({ isGuest = false }) {
     if (gemPopups) gemPopups.forEach(p => spawnFloatingGem(p.amount, p.label));
   }
 
-  // Gold theme countdown check
   useEffect(() => {
     if (!progress?.gold_theme_until) return;
     const check = () => {
@@ -100,7 +95,6 @@ export default function Layout({ isGuest = false }) {
     return () => clearInterval(id);
   }, [progress?.gold_theme_until]);
 
-  // Apply theme when owned — only set --primary and --ring so light/dark toggle keeps working
   useEffect(() => {
     if (!progress) return;
     const owned = progress.owned_items || [];
@@ -110,11 +104,9 @@ export default function Layout({ isGuest = false }) {
       '--secondary','--secondary-foreground','--muted','--muted-foreground',
       '--accent','--accent-foreground','--border','--input','--ring'];
     if (owned.includes('part2-unlocked') || owned.includes('part2-portal')) {
-      // Only tint the primary accent — do NOT override background/card/muted so light mode still works
       root.style.setProperty('--primary', '271 76% 63%');
       root.style.setProperty('--primary-foreground', '0 0% 100%');
       root.style.setProperty('--ring', '271 76% 70%');
-      // Remove any other inline overrides
       ['--background','--foreground','--card','--card-foreground','--secondary','--secondary-foreground',
        '--muted','--muted-foreground','--accent','--accent-foreground','--border','--input'].forEach(v => root.style.removeProperty(v));
     } else if (goldActive) {
@@ -124,7 +116,6 @@ export default function Layout({ isGuest = false }) {
       ['--background','--foreground','--card','--card-foreground','--secondary','--secondary-foreground',
        '--muted','--muted-foreground','--accent','--accent-foreground','--border','--input'].forEach(v => root.style.removeProperty(v));
     } else {
-      // Remove all inline overrides — CSS variables from index.css take over
       ALL_VARS.forEach(v => root.style.removeProperty(v));
     }
   }, [progress?.owned_items, progress?.gold_theme_until]);
@@ -133,31 +124,24 @@ export default function Layout({ isGuest = false }) {
     loadProgress();
   }, [guestMode]);
 
-  // Returns today's date in local timezone as YYYY-MM-DD
   function getLocalToday() {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   }
 
-  // Computes new streak given current streak + last active date + freeze state
   function computeStreak(currentStreak, lastActiveDate, streakFreezeExpiry) {
     const today = getLocalToday();
     if (!lastActiveDate) return { streak: 1, last_active_date: today, changed: true, clearFreeze: false };
     if (lastActiveDate === today) return { streak: Math.max(1, currentStreak), last_active_date: today, changed: false, clearFreeze: false };
-
     const last = new Date(lastActiveDate + "T00:00:00");
     const todayDate = new Date(today + "T00:00:00");
     const diffDays = Math.round((todayDate - last) / 86400000);
-
     if (diffDays === 1) {
       return { streak: Math.min((currentStreak || 0) + 1, 999), last_active_date: today, changed: true, clearFreeze: false };
     }
-    // Missed 2+ days — check streak freeze
     if (streakFreezeExpiry && Date.now() < new Date(streakFreezeExpiry).getTime()) {
-      // Freeze is active — protect streak, clear freeze
       return { streak: Math.max(1, currentStreak), last_active_date: today, changed: true, clearFreeze: true };
     }
-    // Reset
     return { streak: 1, last_active_date: today, changed: true, clearFreeze: false };
   }
 
@@ -173,93 +157,61 @@ export default function Layout({ isGuest = false }) {
     }
 
     try {
-    // Check for post-login guest merge
-    const params = new URLSearchParams(window.location.search);
-    const shouldMerge = params.get("merge_guest") === "1";
-    const savedGuest = shouldMerge ? getGuestProgress() : null;
-
-    const user = await db.auth.me();
-    const records = await db.entities.UserProgress.filter({ created_by: user.email });
-
-    if (records.length > 0) {
-      let existing = records[0];
-      if (savedGuest) {
-        // Merge guest progress into existing account (take the higher values)
-        const merged = {
-          xp: Math.max(existing.xp || 0, savedGuest.xp || 0),
-          gems: Math.max(existing.gems || 0, savedGuest.gems || 0),
-          streak: Math.max(existing.streak || 0, savedGuest.streak || 0),
-          completed_lessons: [...new Set([...(existing.completed_lessons || []), ...(savedGuest.completed_lessons || [])])],
-          owned_items: [...new Set([...(existing.owned_items || []), ...(savedGuest.owned_items || [])])],
-          hearts: Math.max(existing.hearts || 3, savedGuest.hearts || 3),
-          avatar_config: savedGuest.avatar_config || existing.avatar_config,
-        };
-        await db.entities.UserProgress.update(existing.id, merged);
-        existing = { ...existing, ...merged };
-        clearGuest();
-        const url = new URL(window.location.href);
-        url.searchParams.delete("merge_guest");
-        window.history.replaceState({}, "", url.toString());
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setProgress({ xp: 0, hearts: 3, gems: 50, streak: 1, completed_lessons: [], owned_items: [], level: 1 });
+        return;
       }
 
-      // Streak check on open
-      const { streak, last_active_date, changed, clearFreeze } = computeStreak(existing.streak || 0, existing.last_active_date, existing.streak_freeze_expiry);
-      const streakUpdate = {};
-      if (changed) {
-        streakUpdate.streak = streak;
-        streakUpdate.last_active_date = last_active_date;
-        // Interest account: new day → +5 gems
-        if (existing.interest_account_active) {
-          streakUpdate.gems = (existing.gems || 0) + 5;
-        }
-        if (clearFreeze) streakUpdate.streak_freeze_expiry = null;
-        await db.entities.UserProgress.update(existing.id, streakUpdate);
-        existing = { ...existing, ...streakUpdate };
-      }
-
-      // Check for pending forfeit penalty from a closed battle
-      if (localStorage.getItem(PENDING_FORFEIT_KEY)) {
-        localStorage.removeItem(PENDING_FORFEIT_KEY);
-        const deduct = 10;
-        existing = { ...existing, gems: (existing.gems || 0) - deduct };
-        await db.entities.UserProgress.update(existing.id, { gems: existing.gems });
-        // Show toast after a short delay so layout renders first
-        setTimeout(() => toast.error(`You left a battle. -${deduct} 💎`), 1500);
-      }
-
-      // Restore saved theme
-      if (existing.active_theme) setActiveTheme(existing.active_theme);
-
-      setProgress(existing);
-    } else {
       const today = getLocalToday();
-      const base = savedGuest ? {
-        xp: savedGuest.xp || 0,
-        hearts: savedGuest.hearts || 3,
-        gems: savedGuest.gems || 50,
-        streak: 1,
-        last_active_date: today,
-        completed_lessons: savedGuest.completed_lessons || [],
-        current_unit: savedGuest.current_unit || 1,
-        level: savedGuest.level || 1,
-        daily_reward_day: savedGuest.daily_reward_day || 1,
-        owned_items: savedGuest.owned_items || [],
-        avatar_config: savedGuest.avatar_config,
-        stock_positions: savedGuest.stock_positions || {},
-      } : {
-        xp: 0, hearts: 3, gems: 50, streak: 1,
-        last_active_date: today,
-        completed_lessons: [], current_unit: 1, level: 1, daily_reward_day: 1, owned_items: [],
-      };
-      const newProgress = await db.entities.UserProgress.create(base);
-      if (savedGuest) {
-        clearGuest();
-        const url = new URL(window.location.href);
-        url.searchParams.delete("merge_guest");
-        window.history.replaceState({}, "", url.toString());
+      const { data: records, error } = await supabase
+        .from("user_progress")
+        .select("*")
+        .eq("email", user.email);
+
+      if (error) throw error;
+
+      if (records && records.length > 0) {
+        let existing = records[0];
+
+        const { streak, last_active_date, changed, clearFreeze } = computeStreak(existing.streak || 0, existing.last_active_date, existing.streak_freeze_expiry);
+        if (changed) {
+          const streakUpdate = { streak, last_active_date };
+          if (existing.interest_account_active) streakUpdate.gems = (existing.gems || 0) + 5;
+          if (clearFreeze) streakUpdate.streak_freeze_expiry = null;
+          await supabase.from("user_progress").update(streakUpdate).eq("id", existing.id);
+          existing = { ...existing, ...streakUpdate };
+        }
+
+        if (localStorage.getItem(PENDING_FORFEIT_KEY)) {
+          localStorage.removeItem(PENDING_FORFEIT_KEY);
+          const deduct = 10;
+          existing = { ...existing, gems: (existing.gems || 0) - deduct };
+          await supabase.from("user_progress").update({ gems: existing.gems }).eq("id", existing.id);
+          setTimeout(() => toast.error(`You left a battle. -${deduct} 💎`), 1500);
+        }
+
+        if (existing.active_theme) setActiveTheme(existing.active_theme);
+        setProgress(existing);
+      } else {
+        // Create new progress record
+        const base = {
+          email: user.email,
+          full_name: user.user_metadata?.full_name || user.email?.split("@")[0],
+          avatar_url: user.user_metadata?.avatar_url || null,
+          xp: 0, hearts: 3, gems: 50, streak: 1,
+          last_active_date: today,
+          completed_lessons: [], current_unit: 1, level: 1,
+          daily_reward_day: 1, owned_items: [],
+        };
+        const { data: newProgress, error: createError } = await supabase
+  .from("user_progress")
+  .upsert(base, { onConflict: 'email' })
+  .select()
+  .single();
+        if (createError) throw createError;
+        setProgress(newProgress);
       }
-      setProgress(newProgress);
-    }
     } catch (err) {
       console.error("Failed to load progress:", err);
       setProgress({ xp: 0, hearts: 3, gems: 50, streak: 1, completed_lessons: [], owned_items: [], level: 1 });

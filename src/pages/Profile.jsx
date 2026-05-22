@@ -27,9 +27,11 @@ export default function Profile() {
   const [badgeQueue, setBadgeQueue] = useState([]);
   const [currentToast, setCurrentToast] = useState(null);
 
-  useEffect(() => {
-    db.auth.me().then(setUser).catch(() => {});
-  }, []);
+ useEffect(() => {
+  import('../lib/supabaseClient').then(({ supabase }) => {
+    supabase.auth.getUser().then(({ data: { user } }) => setUser(user)).catch(() => {});
+  });
+}, []);
 
   // Check badges on mount
   useEffect(() => {
@@ -222,7 +224,7 @@ export default function Profile() {
       {/* Login / Logout */}
       {user ? (
         <button
-          onClick={() => db.auth.logout(window.location.origin)}
+          onClick={async () => { const { supabase } = await import('../lib/supabaseClient'); await supabase.auth.signOut(); window.location.href = window.location.origin; }}
           className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl border-2 border-border
             text-muted-foreground font-semibold text-sm hover:bg-muted transition-colors"
         >

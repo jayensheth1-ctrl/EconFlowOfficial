@@ -20,19 +20,32 @@ import BattleLogs from './pages/BattleLogs';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isAuthenticated } = useAuth();
-  const [guestActive, setGuestActive] = useState(isGuestMode());
-  const [showLogin, setShowLogin] = useState(false);
+  const [guestActive, setGuestActive] = useState(() => {
+  const val = isGuestMode();
+  console.log("guestActive init:", val);
+  return val;
+});
+  const [showLogin, setShowLogin] = useState(() => {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('showLogin') === 'true';
+});
 
   // When user logs in, clear guest mode
   useEffect(() => {
-    if (isAuthenticated && guestActive) {
-      clearGuest();
-      setGuestActive(false);
-    }
-    if (isAuthenticated) {
-      setShowLogin(false);
-    }
-  }, [isAuthenticated]);
+  if (isAuthenticated && guestActive) {
+    clearGuest();
+    setGuestActive(false);
+  }
+  if (isAuthenticated) {
+    setShowLogin(false);
+  }
+  // If showLogin param is in URL, force show login even in guest mode
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('showLogin') === 'true' && !isAuthenticated) {
+    setShowLogin(true);
+    setGuestActive(false);
+  }
+}, [isAuthenticated]);
 
   if (isLoadingAuth) {
     return (
@@ -56,7 +69,7 @@ const AuthenticatedApp = () => {
 
   return (
     <Routes>
-      <Route element={<Layout isGuest={guestActive && !isAuthenticated} />}>
+      <Route element={<Layout isGuest={false} />}>
         <Route path="/" element={<Home />} />
         <Route path="/leaderboard" element={<Leaderboard />} />
         <Route path="/shop" element={<Shop />} />

@@ -1,5 +1,4 @@
-const db = globalThis.__B44_DB__ || { auth:{ isAuthenticated: async()=>false, me: async()=>null }, entities:new Proxy({}, { get:()=>({ filter:async()=>[], get:async()=>null, create:async()=>({}), update:async()=>({}), delete:async()=>({}) }) }), integrations:{ Core:{ UploadFile:async()=>({ file_url:'' }) } } };
-
+import { supabase } from '../lib/supabaseClient';
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useOutletContext } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -322,7 +321,8 @@ export default function Home() {
       setPendingBadges(newBadges);
     }
 
-    await db.entities.UserProgress.update(progress.id, finalUpdate);
+    const { error: updateError } = await supabase.from("user_progress").update(finalUpdate).eq("id", progress.id);
+console.log("Update result:", updateError, "progress.id:", progress.id, "finalUpdate:", finalUpdate);
     setProgress({ ...progress, ...finalUpdate }, gemPopups.filter(p => p.amount > 0).length > 0 ? gemPopups.filter(p => p.amount > 0) : null);
     setActiveLesson(null);
     if (willShowCinematic) {

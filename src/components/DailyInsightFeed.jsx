@@ -41,7 +41,16 @@ function analyzePortfolio(positions) {
 }
 
 function generateInsights(analysis) {
-  if (!analysis) return [];
+  if (!analysis) return [{
+  id: "get-started",
+  emoji: "🚀",
+  color: "#00F2FF",
+  title: "Start building your portfolio",
+  body: "Head to The Lab → Stocks to buy your first assets. Come back here for personalized portfolio analysis.",
+  action: "Learn about diversification →",
+  topic: "diversification",
+  urgency: "medium",
+}];
   const { bondsPct, stocksPct, goldPct } = analysis;
   const cards = [];
 

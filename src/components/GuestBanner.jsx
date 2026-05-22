@@ -1,5 +1,3 @@
-const db = globalThis.__B44_DB__ || { auth:{ isAuthenticated: async()=>false, me: async()=>null }, entities:new Proxy({}, { get:()=>({ filter:async()=>[], get:async()=>null, create:async()=>({}), update:async()=>({}), delete:async()=>({}) }) }), integrations:{ Core:{ UploadFile:async()=>({ file_url:'' }) } } };
-
 import { useState } from "react";
 import { Cloud, X, LogIn, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -11,11 +9,9 @@ export default function GuestBanner({ guestName }) {
 
   if (dismissed) return null;
 
-  function handleLogin() {
-    // Pass merge flag so Layout can merge guest progress after login
-    const returnUrl = window.location.origin + window.location.pathname + "?merge_guest=1";
-    db.auth.redirectToLogin(returnUrl);
-  }
+ function handleLogin() {
+  window.location.href = window.location.origin + '?showLogin=true';
+}
 
   function handleReset() {
     clearGuest();
