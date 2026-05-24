@@ -57,12 +57,12 @@ const AuthenticatedApp = () => {
 
   if (!isAuthenticated && !guestActive) {
     if (showLogin) {
-      return <Login onBack={() => setShowLogin(false)} />;
+      return <Login onBack={() => setShowLogin(false)} initialMode={showLogin} />;
     }
     return (
       <GuestLanding
         onGuestStart={() => setGuestActive(true)}
-        onLogin={() => setShowLogin(true)}
+        onLogin={(mode) => setShowLogin(mode || "login")}
       />
     );
   }

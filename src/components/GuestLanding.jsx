@@ -46,8 +46,8 @@ export default function GuestLanding({ onGuestStart, onLogin }) {
 
         <div className="text-center">
           <h1 className="text-3xl font-black" style={{ color: "#00F2FF", textShadow: "0 0 20px #00F2FF66" }}>
-            EconBuddy
-          </h1>
+  EconFlow
+</h1>
           <p className="text-sm mt-1" style={{ color: "rgba(0,242,255,0.6)" }}>
             Learn Finance. Level Up. Get Rich (in knowledge).
           </p>
@@ -56,7 +56,7 @@ export default function GuestLanding({ onGuestStart, onLogin }) {
         <div className="w-full flex flex-col gap-3">
           <motion.button
             whileTap={{ scale: 0.97 }}
-            onClick={onLogin}
+            onClick={() => onLogin("signup")}
             className="w-full py-4 rounded-2xl font-extrabold text-base flex items-center justify-center gap-2"
             style={{
               background: "linear-gradient(135deg, hsl(145 70% 48%), hsl(145 70% 35%))",
@@ -70,7 +70,7 @@ export default function GuestLanding({ onGuestStart, onLogin }) {
 
           <motion.button
             whileTap={{ scale: 0.97 }}
-            onClick={onLogin}
+            onClick={() => onLogin("login")}
             className="w-full py-3.5 rounded-2xl font-bold text-sm flex items-center justify-center gap-2"
             style={{
               background: "rgba(255,255,255,0.07)",
