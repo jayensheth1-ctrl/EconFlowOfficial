@@ -5,7 +5,14 @@ export default function WordBank({ question, onAnswer }) {
   const [filledBlanks, setFilledBlanks] = useState(
     Array(question.blanks.length).fill(null)
   );
-  const [availableWords, setAvailableWords] = useState([...question.options]);
+  const [availableWords, setAvailableWords] = useState(() => {
+  const words = [...question.options];
+  for (let i = words.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [words[i], words[j]] = [words[j], words[i]];
+  }
+  return words;
+});
   const [submitted, setSubmitted] = useState(false);
   const [kbWordIdx, setKbWordIdx] = useState(0); // keyboard-selected word index
 

@@ -1,5 +1,3 @@
-const db = globalThis.__B44_DB__ || { auth:{ isAuthenticated: async()=>false, me: async()=>null }, entities:new Proxy({}, { get:()=>({ filter:async()=>[], get:async()=>null, create:async()=>({}), update:async()=>({}), delete:async()=>({}) }) }), integrations:{ Core:{ UploadFile:async()=>({ file_url:'' }) } } };
-
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useOutletContext } from "react-router-dom";
@@ -8,6 +6,7 @@ import EconBuddy from "../components/EconBuddy";
 import { Link } from "react-router-dom";
 
 import { getAllLessons } from "../lib/lessonData";
+import { getAllPart2Lessons } from "../lib/part2LessonData";
 import { getUsername, setUsername } from "../lib/usernameStore";
 import Filter from "bad-words";
 import BadgeGrid from "../components/profile/BadgeGrid";
@@ -98,7 +97,7 @@ export default function Profile() {
     if (e.key === "Escape") cancelEditing();
   }
 
-  const allLessons = getAllLessons();
+  const allLessons = [...getAllLessons(), ...getAllPart2Lessons()];
   const completedCount = (progress.completed_lessons || []).length;
   const totalLessons = allLessons.length;
   const completionPercent = Math.round((completedCount / totalLessons) * 100);

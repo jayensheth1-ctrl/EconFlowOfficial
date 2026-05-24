@@ -225,7 +225,7 @@ export default function Home() {
       const newStreak = isNewDay ? (guestData.streak || 0) + 1 : (guestData.streak || 0);
       const updated = {
         ...guestData,
-        xp: (guestData.xp || 0) + (result.xpEarned || 10),
+        xp: (guestData.xp || 0) + applyXpBoosts(result.xpEarned || 10, guestData),
         gems: (guestData.gems || 0) + (result.completed ? 10 : 0),
         completed_lessons: newCompleted,
         streak: newStreak,
@@ -300,15 +300,19 @@ export default function Home() {
     // Gem multiplier
     const gemBonus = applyGemMultiplier(gemPopups.reduce((s, p) => s + p.amount, 0), progress);
 
-    const updateData = {
-      hearts: 3,
-      xp: progress.xp + xpGained,
-      gems: progress.gems + gemBonus,
-      completed_lessons: newCompleted,
-      streak: newStreak,
-      last_active_date: today,
-      ...badgeUpdates,
-    };
+    const newXp = progress.xp + xpGained;
+const newLevel = Math.floor(newXp / 100) + 1;
+
+const updateData = {
+  hearts: 3,
+  xp: newXp,
+  level: newLevel,
+  gems: progress.gems + gemBonus,
+  completed_lessons: newCompleted,
+  streak: newStreak,
+  last_active_date: today,
+  ...badgeUpdates,
+};
 
     // Check for new badges
     const progressForCheck = { ...progress, ...updateData };

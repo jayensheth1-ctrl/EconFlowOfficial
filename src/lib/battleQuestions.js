@@ -156,8 +156,8 @@ export const BATTLE_QUESTIONS = [
 ];
 
 /** Fisher-Yates shuffle of question indices */
-export function shuffleQuestions(seed) {
-  const arr = BATTLE_QUESTIONS.map((q, i) => i);
+export function shuffleQuestions(seed, length) {
+  const arr = Array.from({ length }, (_, i) => i);
   let s = seed;
   for (let i = arr.length - 1; i > 0; i--) {
     s = (s * 1664525 + 1013904223) & 0xffffffff;

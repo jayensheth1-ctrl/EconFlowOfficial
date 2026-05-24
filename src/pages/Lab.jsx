@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import StockSimulator from "../components/lab/StockSimulator";
@@ -18,6 +18,19 @@ const TABS = [
 export default function Lab() {
   const { progress, setProgress, stocks } = useOutletContext();
   const [tab, setTab] = useState("stock");
+
+  useEffect(() => {
+    const today = new Date().toISOString().split("T")[0];
+    const labDays = progress?.badge_lab_days || [];
+    if (!labDays.includes(today)) {
+      const updated = [...labDays, today];
+      import('../lib/progressUtils').then(({ updateProgress }) => {
+        updateProgress(progress, { badge_lab_days: updated }).then(newProgress => {
+          setProgress(newProgress);
+        });
+      });
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">

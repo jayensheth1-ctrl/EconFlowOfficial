@@ -883,13 +883,13 @@ export const part2Units = [
             correct: 0,
             explanation: "Amortization spreads payments over the loan term — early payments are mostly interest (bank profits first), later ones predominantly reduce principal."
           },
-          {
-            type: "word_bank",
-            question: "A lower ___ rate means lower monthly payments and less total ___ paid over the loan term.",
-            blanks: ["interest", "interest"],
-            options: ["interest", "tax", "equity", "rent"],
-            explanation: "Even a 1% lower rate on a $300K mortgage saves tens of thousands of dollars over 30 years. Rate shopping matters enormously!"
-          },
+         {
+  type: "word_bank",
+  question: "A lower ___ rate means lower monthly ___ and less total cost over the loan term.",
+  blanks: ["interest", "payments"],
+  options: ["interest", "payments", "tax", "equity", "rent"],
+  explanation: "Even a 1% lower rate on a $300K mortgage saves tens of thousands of dollars over 30 years. Rate shopping matters enormously!"
+},
           {
             type: "multiple_choice",
             question: "If you buy a $400K home with 20% down ($80K) and it appreciates to $500K, what is your return on investment?",

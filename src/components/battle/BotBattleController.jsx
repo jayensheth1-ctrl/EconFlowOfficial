@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { BATTLE_QUESTIONS, shuffleQuestions, shuffleOptions } from "../../lib/battleQuestions";
+import { shuffleQuestions, shuffleOptions } from "../../lib/battleQuestions";
+import { getAllLessons } from "../../lib/lessonData";
+import { getAllPart2Lessons } from "../../lib/part2LessonData";
 import { generateBot, getBotParams, getBotDelay, getLossStreak, setLossStreak, PENDING_FORFEIT_KEY } from "../../lib/botBattle";
 import { saveBattleLog } from "../../lib/battleLogs";
 import { updateProgress } from "../../lib/progressUtils";
@@ -13,12 +15,24 @@ const WIN_SCORE = 10;
 const WIN_GEMS = 15;
 const LOSS_GEMS = 10;
 
-function getQuestions() {
-  const seed = Date.now() % 1000000;
-  const order = shuffleQuestions(seed);
-  return order.slice(0, 20).map(i => shuffleOptions(BATTLE_QUESTIONS[i]));
-}
+function getQuestions(part2Unlocked = false) {
+  const part1Questions = getAllLessons()
+    .flatMap(l => l.questions || [])
+    .filter(q => q.type === "multiple_choice")
+    .map(q => ({ question: q.question, options: q.options, correct: q.correct }));
 
+  const part2Questions = part2Unlocked
+    ? getAllPart2Lessons()
+        .flatMap(l => l.questions || [])
+        .filter(q => q.type === "multiple_choice")
+        .map(q => ({ question: q.question, options: q.options, correct: q.correct }))
+    : [];
+
+  const allQuestions = [...part1Questions, ...part2Questions];
+  const seed = Date.now() % 1000000;
+  const order = shuffleQuestions(seed, allQuestions.length);
+  return order.slice(0, 20).map(i => shuffleOptions(allQuestions[i]));
+}
 export default function BotBattleController({
   myName, avatarConfig, progress, setProgress, onExit,
 }) {
@@ -32,13 +46,16 @@ export default function BotBattleController({
   // Bot and questions stored in refs so they can be swapped on Play Again
   // without triggering re-renders or stale closure issues
   const botRef = useRef(generateBot());
-  const questionsRef = useRef(getQuestions());
+  const part2Unlocked = (progress?.owned_items || []).includes('part2-unlocked');
+const questionsRef = useRef(getQuestions(part2Unlocked));
 
   // Mirrors of score state for use inside callbacks (avoid stale closures)
   const myScoreRef = useRef(0);
   const botScoreRef = useRef(0);
   const phaseRef = useRef("pregame");
   const gemsAwardedRef = useRef(false);
+const progressRef = useRef(progress);
+useEffect(() => { progressRef.current = progress; }, [progress]);
   const botIntervalRef = useRef(null);
   const paramsRef = useRef(null);
 
@@ -115,19 +132,16 @@ export default function BotBattleController({
     });
 
     // Badge battle tracking
-    const battlePlayed = (progress.badge_battles_played || 0) + 1;
-    const battleWins = userWon ? (progress.badge_battle_wins || 0) + 1 : (progress.badge_battle_wins || 0);
-    updateProgress(progress, { badge_battles_played: battlePlayed, badge_battle_wins: battleWins }).then(async (updated) => {
-      const { checkNewBadges, buildBadgeUpdate } = await import("../../lib/badges");
-      const newBadges = checkNewBadges(updated);
-      if (newBadges.length) {
-        const badgeUpd = buildBadgeUpdate(updated, newBadges);
-        const withBadges = await updateProgress(updated, badgeUpd);
-        setProgress(withBadges);
-      } else {
-        setProgress(updated);
-      }
-    });
+  const battlePlayed = (progressRef.current.badge_battles_played || 0) + 1;
+const battleWins = userWon ? (progressRef.current.badge_battle_wins || 0) + 1 : (progressRef.current.badge_battle_wins || 0);
+    updateProgress(progressRef.current, { badge_battles_played: battlePlayed, badge_battle_wins: battleWins }).then(async (updated) => {
+  const { checkNewBadges, buildBadgeUpdate } = await import("../../lib/badges");
+  const newBadges = checkNewBadges(updated);
+  if (newBadges.length) {
+    const badgeUpd = buildBadgeUpdate(updated, newBadges);
+    await updateProgress(updated, badgeUpd);
+  }
+});
 
     if (userWon) {
       setLossStreak(0);
@@ -142,19 +156,29 @@ export default function BotBattleController({
   }
 
   async function awardWinGems() {
-    if (gemsAwardedRef.current) return;
-    gemsAwardedRef.current = true;
-    const update = { gems: (progress.gems || 0) + WIN_GEMS };
-    await updateProgress(progress, update);
-    setProgress({ ...progress, ...update });
+  if (gemsAwardedRef.current) return;
+  gemsAwardedRef.current = true;
+  const newGems = (progressRef.current.gems || 0) + WIN_GEMS;
+  const updated = { ...progressRef.current, gems: newGems };
+  await updateProgress(progressRef.current, { gems: newGems });
+  const { checkNewBadges, buildBadgeUpdate } = await import("../../lib/badges");
+  const newBadges = checkNewBadges({ ...updated, badge_battle_wins: (progressRef.current.badge_battle_wins || 0) + 1 });
+  if (newBadges.length) {
+    const badgeUpd = buildBadgeUpdate(updated, newBadges);
+    const withBadges = await updateProgress(updated, badgeUpd);
+    setProgress(withBadges);
+  } else {
+    setProgress(updated);
   }
+}
 
   async function deductLossGems(forfeit = false) {
-    const update = { gems: (progress.gems || 0) - LOSS_GEMS };
-    await updateProgress(progress, update);
-    setProgress({ ...progress, ...update });
-    if (forfeit) setForfeitMessage(`You forfeited the battle. -${LOSS_GEMS} gems.`);
-  }
+  const newGems = Math.max(0, (progressRef.current.gems || 0) - LOSS_GEMS);
+  const updated = { ...progressRef.current, gems: newGems };
+  await updateProgress(progressRef.current, { gems: newGems });
+  setProgress(updated);
+  if (forfeit) setForfeitMessage(`You forfeited the battle. -${LOSS_GEMS} gems.`);
+}
 
   function handleForfeit() {
     finishGame(false, true);
@@ -183,8 +207,8 @@ export default function BotBattleController({
     setBotSnapshot({ ...newBot });
 
     // Fresh questions
-    questionsRef.current = getQuestions();
-
+const part2Unlocked = (progress?.owned_items || []).includes('part2-unlocked');
+questionsRef.current = getQuestions(part2Unlocked);
     // Reset all state
     myScoreRef.current = 0;
     botScoreRef.current = 0;

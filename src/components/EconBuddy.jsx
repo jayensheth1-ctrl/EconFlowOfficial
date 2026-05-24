@@ -198,6 +198,21 @@ export default function EconBuddy({ config = {}, size = 80 }) {
               style={{ filter: "drop-shadow(0 0 6px #00F2FF)" }} />
           </>
         )}
+	{accessory === "briefcase" && (
+  <g>
+    {/* Titanium briefcase held in right hand */}
+    <rect x="74" y="72" width="18" height="14" rx="3"
+      fill="#9EA7B0" stroke="#E8EDF0" strokeWidth="1.5"
+      style={{ filter: "drop-shadow(0 0 4px rgba(200,210,220,0.6))" }} />
+    {/* Handle */}
+    <path d="M79 72 Q83 67 87 72" stroke="#E8EDF0" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+    {/* Latch */}
+    <rect x="81" y="77" width="4" height="3" rx="1"
+      fill="#C0C8D0" stroke="#E8EDF0" strokeWidth="0.8" />
+    {/* Horizontal line detail */}
+    <line x1="74" y1="79" x2="92" y2="79" stroke="#E8EDF0" strokeWidth="0.8" opacity="0.5" />
+  </g>
+)}
         {accessory === "mech-arm" && (
           <g>
             {/* Bionic arm overlay on left */}

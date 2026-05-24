@@ -103,9 +103,9 @@ export const CATEGORY_TABS = [
 export function applyXpBoosts(baseXp, progress) {
   let xp = baseXp;
   const now = Date.now();
-  if (progress?.xp_boost_until && new Date(progress.xp_boost_until).getTime() > now) {
-    xp = xp * 2;
-  }
+ if (progress?.xp_boost_until && new Date(progress.xp_boost_until).getTime() > now) {
+  xp = progress?.flash_surge_active ? xp * 3 : xp * 2;
+}
   if (progress?.xp_magnet_until && new Date(progress.xp_magnet_until).getTime() > now) {
     xp = Math.ceil(xp * 1.25);
   }

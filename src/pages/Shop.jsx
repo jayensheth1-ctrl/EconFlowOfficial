@@ -308,18 +308,39 @@ export default function Shop() {
   }
 
   async function handleBuy(item) {
-    if (progress.gems < item.price) {
-      setShakeGems(true);
-      setTimeout(() => setShakeGems(false), 600);
-      toast.error(`Need ${item.price - progress.gems} more 💎`);
-      return;
-    }
-    playChaChig();
-    spawnFloat(item.price);
+  if (progress.gems < item.price) {
+    setShakeGems(true);
+    setTimeout(() => setShakeGems(false), 600);
+    toast.error(`Need ${item.price - progress.gems} more 💎`);
+    return;
+  }
+  playChaChig();
+  spawnFloat(item.price);
 
-    const update = { gems: progress.gems - item.price };
+  const update = { gems: progress.gems - item.price };
 
-    if (item.behavior === "consumable_stack") {
+ // Handle flash sale items
+if (item.type === "consumable") {
+  if (item.id === "flash-surge") {
+    const existing = progress.xp_boost_until && new Date(progress.xp_boost_until).getTime() > Date.now()
+      ? new Date(progress.xp_boost_until).getTime() : Date.now();
+    update.xp_boost_until = new Date(existing + 10 * 60 * 1000).toISOString();
+    update.flash_surge_active = true;
+  }
+  if (item.id === "flash-shield") {
+    const existing = progress.streak_freeze_expiry && new Date(progress.streak_freeze_expiry).getTime() > Date.now()
+      ? new Date(progress.streak_freeze_expiry).getTime() : Date.now();
+    update.streak_freeze_expiry = new Date(existing + 48 * 60 * 60 * 1000).toISOString();
+  }
+}
+if (item.type === "owned") {
+  update.owned_items = [...new Set([...ownedItems, item.id])];
+  if (item.avatarKey) {
+    update.avatar_config = { ...(progress.avatar_config || {}), [item.avatarKey]: item.avatarVal };
+  }
+}
+
+  if (item.behavior === "consumable_stack") {
       update.inventory_counts = { ...inventoryCounts, [item.id]: (inventoryCounts[item.id] || 0) + 1 };
     }
 
@@ -484,7 +505,7 @@ export default function Shop() {
         {/* Active boosts strip */}
         {(xpBoostMs > 0 || goldThemeMs > 0 || streakFreezeMs > 0 || xpMagnetMs > 0 || gemMultMs > 0) && (
           <div className="flex gap-2 mb-3 flex-wrap">
-            {xpBoostMs > 0 && <TimerBadge label="2× XP" ms={xpBoostMs} color="#F1C40F" />}
+            {xpBoostMs > 0 && <TimerBadge label={progress.flash_surge_active ? "3× XP" : "2× XP"} ms={xpBoostMs} color="#F1C40F" />}
             {xpMagnetMs > 0 && <TimerBadge label="+25% XP" ms={xpMagnetMs} color="#C084FC" />}
             {gemMultMs > 0 && <TimerBadge label="💰 1.5× Gems" ms={gemMultMs} color="#2ECC71" />}
             {goldThemeMs > 0 && <TimerBadge label="Gold UI" ms={goldThemeMs} color="#F1C40F" />}

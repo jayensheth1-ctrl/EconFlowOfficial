@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useOutletContext } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, BookOpen, Search } from "lucide-react";
 
@@ -111,6 +112,7 @@ export const GLOSSARY_TERMS = [
 
 export default function KnowledgeBase() {
   const navigate = useNavigate();
+const { progress, setProgress } = useOutletContext();
   const [selected, setSelected] = useState(null);
   const [tab, setTab] = useState("glossary");
   const [search, setSearch] = useState("");
@@ -125,14 +127,16 @@ export default function KnowledgeBase() {
     }
   }, []);
 
-  function handleSelectCard(card) {
-    setSelected(card);
-    // Track article read for Knowledge Seeker badge
-    const stored = JSON.parse(localStorage.getItem("badge_articles_read") || "[]");
-    if (!stored.includes(card.id)) {
-      localStorage.setItem("badge_articles_read", JSON.stringify([...stored, card.id]));
-    }
+  async function handleSelectCard(card) {
+  setSelected(card);
+  const read = progress?.badge_articles_read || [];
+  if (!read.includes(card.id)) {
+    const updated = [...read, card.id];
+    const { updateProgress } = await import('../lib/progressUtils');
+    const newProgress = await updateProgress(progress, { badge_articles_read: updated });
+    setProgress(newProgress);
   }
+}
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -281,11 +285,6 @@ export default function KnowledgeBase() {
               <p className="text-sm text-foreground leading-relaxed">{selected.lesson}</p>
             </div>
 
-            <div className="rounded-xl p-4"
-              style={{ background: "hsl(var(--primary) / 0.06)", border: "1px solid hsl(var(--primary) / 0.25)" }}>
-              <p className="text-[9px] font-bold uppercase tracking-widest mb-1 text-primary">🚀 Apply It In-Game</p>
-              <p className="text-sm leading-relaxed text-primary">{selected.gameLink}</p>
-            </div>
           </motion.div>
         )}
       </div>

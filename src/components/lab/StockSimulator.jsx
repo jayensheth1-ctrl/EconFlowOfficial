@@ -298,7 +298,10 @@ export default function StockSimulator({ progress, setProgress }) {
       const qty = Math.min(buyQty, Math.floor(cash / currentPrice));
       if (qty < 1) return;
       const newPos = { ...positions, [activeTicker]: { shares: qty, entryPrice: currentPrice, cash: cash - qty * currentPrice } };
-      setProgress(await updateProgress(progress, { stock_positions: newPos }));
+setProgress(await updateProgress(progress, { 
+  stock_positions: newPos,
+  badge_first_trade_done: true 
+}));
       setBuyQty(1);
     }
   }
@@ -361,8 +364,13 @@ export default function StockSimulator({ progress, setProgress }) {
         setSellQty(1);
         return;
       }
-      setProgress(await updateProgress(progress, { stock_positions: newPos }));
-      setSellQty(1);
+      const isProfitable = currentPrice > entryPrice;
+setProgress(await updateProgress(progress, { 
+  stock_positions: newPos,
+  badge_first_trade_done: true,
+  ...(isProfitable ? { badge_profitable_trade_done: true } : {})
+}));
+setSellQty(1);
     }
   }
 
