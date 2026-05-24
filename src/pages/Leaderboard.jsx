@@ -114,7 +114,7 @@ export default function Leaderboard() {
           style={{ background: "rgba(147,51,234,0.08)", border: "1px solid rgba(147,51,234,0.25)" }}>
           <UserX className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: "#C084FC" }} />
           <p className="text-xs leading-relaxed" style={{ color: "rgba(192,132,252,0.85)" }}>
-            You are viewing global leaders in Guest Mode. <strong>Sign in to post your score!</strong>
+            You are viewing global leaders in Guest Mode. <strong>Sign in to post your score!</strong> Note: signing in will reset your guest progress.
           </p>
         </div>
       )}
