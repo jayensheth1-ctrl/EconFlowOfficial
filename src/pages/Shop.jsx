@@ -460,6 +460,9 @@ if (item.type === "owned") {
     ? themeItems
     : nonThemeItems.filter(i => i.cat === activeTab);
 
+const allTabItems = activeTab === "all" ? nonThemeItems : null;
+const allTabThemes = activeTab === "all" ? themeItems : null;
+
   return (
     <div className="min-h-screen pb-24 relative bg-background">
       <BadgeToast badge={currentBadgeToast} onDone={() => setCurrentBadgeToast(null)} />
@@ -564,8 +567,9 @@ if (item.type === "owned") {
           </div>
         )}
 
-        {/* Regular item grid */}
-        {activeTab !== "themes" && (
+      {/* Regular item grid */}
+      {activeTab !== "themes" && (
+        <>
           <div className="grid grid-cols-2 gap-3">
             {visibleItems.map(item => (
               <ShopCard
@@ -579,7 +583,29 @@ if (item.type === "owned") {
               />
             ))}
           </div>
-        )}
+
+          {activeTab === "all" && (
+            <>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-4 mb-2">
+                🎨 Themes <span className="normal-case font-normal">(Dark mode only)</span>
+              </p>
+              <div className="flex flex-col gap-2.5">
+                {themeItems.map(item => {
+                  const isOwned = ownedItems.includes(item.id) || item.price === 0;
+                  const isEquipped = activeTheme === item.themeKey;
+                  const canAfford = progress.gems >= item.price;
+                  return (
+                    <ThemeCard key={item.id} item={item} isOwned={isOwned} isEquipped={isEquipped}
+                      canAfford={canAfford}
+                      onBuy={() => handleThemeBuy(item)}
+                      onEquip={() => handleThemeEquip(item)} />
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </>
+      )}
       </div>
     </div>
   );

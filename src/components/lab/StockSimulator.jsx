@@ -210,10 +210,26 @@ export default function StockSimulator({ progress, setProgress }) {
   }, []);
 
   // ── Gem Mode state (persisted in progress) ───────────────────────────────
-  const gemModeEnabled  = progress?.gem_mode_enabled ?? false;
-  const gemModeLocked   = progress?.gem_mode_locked ?? false;    // permanently locked after buys+sells exhausted
-  const gemBuysLeft     = progress?.gem_buys_left   ?? GEM_MODE_MAX_BUYS;
-  const gemSellsLeft    = progress?.gem_sells_left  ?? GEM_MODE_MAX_SELLS;
+  // Check if gem mode should reset (new day)
+const today = new Date().toISOString().split("T")[0];
+const gemModeLastReset = progress?.gem_mode_last_reset;
+const shouldResetGemMode = gemModeLastReset !== today;
+
+const gemModeEnabled  = shouldResetGemMode ? false : (progress?.gem_mode_enabled ?? false);
+const gemModeLocked   = shouldResetGemMode ? false : (progress?.gem_mode_locked ?? false);
+const gemBuysLeft     = shouldResetGemMode ? GEM_MODE_MAX_BUYS : (progress?.gem_buys_left ?? GEM_MODE_MAX_BUYS);
+const gemSellsLeft    = shouldResetGemMode ? GEM_MODE_MAX_SELLS : (progress?.gem_sells_left ?? GEM_MODE_MAX_SELLS);
+
+// Auto-reset gem mode if it's a new day
+if (shouldResetGemMode && progress?.id) {
+  updateProgress(progress, {
+    gem_mode_enabled: false,
+    gem_mode_locked: false,
+    gem_buys_left: GEM_MODE_MAX_BUYS,
+    gem_sells_left: GEM_MODE_MAX_SELLS,
+    gem_mode_last_reset: today,
+  }).then(updated => setProgress(updated));
+}
   // gem positions stored separately: gem_positions[ticker] = { shares, entryPrice }
   const gemPositions    = progress?.gem_positions   ?? {};
 

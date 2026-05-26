@@ -48,16 +48,10 @@ export const SHOP_ITEMS = [
     title: "Investment Portfolio",     desc: "10% chance to double XP at lesson end." },
 
   // ── PERKS ────────────────────────────────────────────────────────────────
-  { id: "answer-shield",    cat: "perks",    rarity: "standard",  emoji: "🎯", price: 25,  behavior: "consumable_stack", prestige: 0,
-    title: "Answer Shield",            desc: "Forgives one wrong answer per use — no heart lost, question retried." },
   { id: "hint-token",       cat: "perks",    rarity: "standard",  emoji: "🔍", price: 20,  behavior: "consumable_stack", prestige: 0,
     title: "Hint Token",               desc: "Eliminates one wrong answer (50/50 style) during a question." },
-  { id: "time-warp",        cat: "perks",    rarity: "executive", emoji: "⏰", price: 60,  behavior: "consumable_stack", prestige: 10,
-    title: "Time Warp",                desc: "Slows bot answer speed by 50% for one entire battle." },
   { id: "xp-magnet",        cat: "perks",    rarity: "executive", emoji: "🧲", price: 80,  behavior: "timed", duration: 24 * 60 * 60 * 1000, prestige: 15, timedKey: "xp_magnet_until",
     title: "XP Magnet",                desc: "+25% bonus XP for 24 hours. Stacks with XP Surge." },
-  { id: "fortune-flip",     cat: "perks",    rarity: "standard",  emoji: "🎲", price: 15,  behavior: "consumable_stack", prestige: 0,
-    title: "Fortune Flip",             desc: "After a lesson: flip a coin — heads doubles XP, tails gives 0." },
   { id: "battery-insulator", cat: "perks",   rarity: "elite",     emoji: "🛡️", price: 110, behavior: "toggle", prestige: 20, toggleKey: "battery_insulator_active",
     title: "Battery Insulator",        desc: "Adds 2 extra battery charges (5 total) while equipped." },
   { id: "gem-multiplier",   cat: "perks",    rarity: "elite",     emoji: "💰", price: 140, behavior: "timed", duration: 48 * 60 * 60 * 1000, prestige: 25, timedKey: "gem_multiplier_until",
@@ -65,19 +59,19 @@ export const SHOP_ITEMS = [
 
   // ── THEMES ───────────────────────────────────────────────────────────────
   { id: "theme-dark-galaxy",  cat: "themes", rarity: "standard",  emoji: "🌌", price: 0,   behavior: "theme", themeKey: "dark-galaxy",  prestige: 0,
-    title: "Dark Galaxy",              desc: "Default neon void look. Always free.", swatch: "#0a1628" },
+    title: "Dark Galaxy",              desc: "Default neon void look. Always free. (Dark mode only)", swatch: "#0a1628" },
   { id: "theme-neon-sunrise", cat: "themes", rarity: "standard",  emoji: "🌅", price: 50,  behavior: "theme", themeKey: "neon-sunrise", prestige: 5,
-    title: "Neon Sunrise",             desc: "Hot orange and pink palette.", swatch: "#FF6B35" },
+    title: "Neon Sunrise",             desc: "Hot orange and pink palette. (Dark mode only)", swatch: "#FF6B35" },
   { id: "theme-ocean-deep",   cat: "themes", rarity: "standard",  emoji: "🌊", price: 50,  behavior: "theme", themeKey: "ocean-deep",   prestige: 5,
-    title: "Ocean Deep",               desc: "Deep teal and navy.", swatch: "#0A2A3A" },
+    title: "Ocean Deep",               desc: "Deep teal and navy. (Dark mode only)", swatch: "#0A2A3A" },
   { id: "theme-forest-sage",  cat: "themes", rarity: "standard",  emoji: "🌿", price: 50,  behavior: "theme", themeKey: "forest-sage",  prestige: 5,
-    title: "Forest Sage",              desc: "Electric greens and dark forest.", swatch: "#0A1F0A" },
+    title: "Forest Sage",              desc: "Electric greens and dark forest. (Dark mode only)", swatch: "#0A1F0A" },
   { id: "theme-cyber-blood",  cat: "themes", rarity: "executive", emoji: "🩸", price: 75,  behavior: "theme", themeKey: "cyber-blood",  prestige: 10,
-    title: "Cyber Blood",              desc: "Deep crimson and black. Aggressive.", swatch: "#1A0000" },
+    title: "Cyber Blood",              desc: "Deep crimson and black. Aggressive. (Dark mode only)", swatch: "#1A0000" },
   { id: "theme-arctic-void",  cat: "themes", rarity: "executive", emoji: "❄️", price: 75,  behavior: "theme", themeKey: "arctic-void",  prestige: 10,
-    title: "Arctic Void",              desc: "Ice white and pale blue. Minimalist.", swatch: "#0A1525" },
+    title: "Arctic Void",              desc: "Ice white and pale blue. Minimalist. (Dark mode only)", swatch: "#0A1525" },
   { id: "theme-golden-hour",  cat: "themes", rarity: "legendary", emoji: "✨", price: 100, behavior: "theme", themeKey: "golden-hour",  prestige: 20,
-    title: "Golden Hour",              desc: "Full metallic gold on near-black.", swatch: "#1A1000" },
+    title: "Golden Hour",              desc: "Full metallic gold on near-black. (Dark mode only)", swatch: "#1A1000" },
 ];
 
 export const ALL_ITEMS = [...SHOP_ITEMS, ...AVATAR_ITEMS];
@@ -90,15 +84,12 @@ export const RARITY_META = {
 };
 
 export const CATEGORY_TABS = [
-  { key: "all",       label: "All Assets", icon: "🏪" },
-  { key: "perks",     label: "Perks",      icon: "🎯" },
-  { key: "themes",    label: "Themes",     icon: "🎨" },
-  { key: "ops",       label: "Ops",        icon: "⚡" },
-  { key: "venture",   label: "Venture",    icon: "🧢" },
-  { key: "executive", label: "Executive",  icon: "💼" },
-  { key: "cyber",     label: "Cyber",      icon: "🤖" },
+  { key: "all",     label: "All Assets", icon: "🏪" },
+  { key: "perks",   label: "Perks",      icon: "🎯" },
+  { key: "themes",  label: "Themes",     icon: "🎨" },
+  { key: "ops",     label: "Ops",        icon: "⚡" },
+  { key: "venture", label: "Venture",    icon: "🧢" },
 ];
-
 // Helper: compute XP with active boosts
 export function applyXpBoosts(baseXp, progress) {
   let xp = baseXp;

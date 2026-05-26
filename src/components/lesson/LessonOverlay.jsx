@@ -23,7 +23,6 @@ export default function LessonOverlay({ lesson, hearts, progress, onComplete, on
   const [correctCount, setCorrectCount] = useState(0);
   const [shake, setShake] = useState(false);
   const [showBatteryDead, setShowBatteryDead] = useState(false);
-  const [shieldUsed, setShieldUsed] = useState(false);
   const [hintsUsedThisQ, setHintsUsedThisQ] = useState(false);
   const [hintEliminatedIndex, setHintEliminatedIndex] = useState(null);
   const [chargeFloaters, setChargeFloaters] = useState([]);
@@ -45,7 +44,6 @@ export default function LessonOverlay({ lesson, hearts, progress, onComplete, on
   const inventoryCounts = progress?.inventory_counts || {};
   const powerCells = inventoryCounts["power-cell"] || 0;
   const fullRecharges = inventoryCounts["full-recharge"] || 0;
-  const answerShields = inventoryCounts["answer-shield"] || 0;
   const hintTokens = inventoryCounts["hint-token"] || 0;
   const batteryInsulatorActive = progress?.battery_insulator_active || false;
 
@@ -140,7 +138,6 @@ export default function LessonOverlay({ lesson, hearts, progress, onComplete, on
       consecutiveCorrectRef.current += 1;
       setFeedback({ isCorrect, explanation });
       enterAdvancesRef.current = true;
-      setShieldUsed(false);
       setHintsUsedThisQ(false);
       setHintEliminatedIndex(null);
     } else {
@@ -148,16 +145,6 @@ export default function LessonOverlay({ lesson, hearts, progress, onComplete, on
       if (!inReview) {
         const q = questions[currentQ];
         wrongQuestionsRef.current = [...wrongQuestionsRef.current.filter(x => x !== q), q];
-      }
-
-      // Answer shield: absorb without battery drain (main lesson only)
-      if (!inReview && answerShields > 0 && !shieldUsed) {
-        spendConsumable("answer-shield");
-        setShieldUsed(true);
-        toast("🎯 Answer Shield protected you! Retry.", { duration: 2000 });
-        setFeedback(null);
-        enterAdvancesRef.current = false;
-        return;
       }
 
       wrongAnsweredRef.current = true;
@@ -195,7 +182,6 @@ export default function LessonOverlay({ lesson, hearts, progress, onComplete, on
   function handleContinue() {
     enterAdvancesRef.current = false;
     setFeedback(null);
-    setShieldUsed(false);
     setHintsUsedThisQ(false);
     setHintEliminatedIndex(null);
 
@@ -238,7 +224,6 @@ export default function LessonOverlay({ lesson, hearts, progress, onComplete, on
       setCorrectCount(0);
       setShowBatteryDead(false);
       setShake(false);
-      setShieldUsed(false);
       setHintsUsedThisQ(false);
       setHintEliminatedIndex(null);
       enterAdvancesRef.current = false;
