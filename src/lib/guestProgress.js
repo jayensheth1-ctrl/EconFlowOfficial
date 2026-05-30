@@ -18,12 +18,34 @@ export function getGuestProgress() {
 
 export function saveGuestProgress(data) {
   localStorage.setItem(KEY, JSON.stringify(data));
+  
+  // Sync to Supabase
+  import('./supabaseClient').then(({ supabase }) => {
+    supabase.from('guest_progress').upsert({
+      id: data.guestName,
+      guest_name: data.guestName,
+      xp: data.xp || 0,
+      streak: data.streak || 0,
+      last_active_date: data.last_active_date,
+    }).then(() => {});
+  });
 }
-
 export function initGuest() {
   const existing = getGuestProgress();
   sessionStorage.setItem(ACTIVE_KEY, "true");
-  if (existing) return existing;
+  if (existing) {
+    // Update existing guest in Supabase
+    import('./supabaseClient').then(({ supabase }) => {
+      supabase.from('guest_progress').upsert({
+        id: existing.id === 'guest' ? existing.guestName : existing.id,
+        guest_name: existing.guestName,
+        xp: existing.xp || 0,
+        streak: existing.streak || 0,
+        last_active_date: existing.last_active_date,
+      }).then(() => {});
+    });
+    return existing;
+  }
   const id = Math.floor(Math.random() * 9000) + 1000;
   const guestName = `Guest_${id}`;
   const fresh = {
@@ -44,9 +66,20 @@ export function initGuest() {
     guestName,
   };
   localStorage.setItem(KEY, JSON.stringify(fresh));
+
+  // Save to Supabase anonymously
+  import('./supabaseClient').then(({ supabase }) => {
+    supabase.from('guest_progress').upsert({
+      id: guestName,
+      guest_name: guestName,
+      xp: 0,
+      streak: 0,
+      last_active_date: fresh.last_active_date,
+    }).then(() => {});
+  });
+
   return fresh;
 }
-
 export function clearGuest() {
   localStorage.removeItem(KEY);
   sessionStorage.removeItem(ACTIVE_KEY);
